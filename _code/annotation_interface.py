@@ -7,17 +7,25 @@ import pandas as pd
 import gradio as gr
 import pyarabic.number
 from glob import glob
-
+import json
+import requests
 import sys
-# first clone this repo: https://github.com/abjadai/catt and set the path below
-sys.path.append('/l/users/hawau.toyin/catt')
+# running setup file is required for downloading cat and installing the necessary packages
+repo_path = os.path.abspath("catt")
+
+sys.path.append(repo_path)
+if repo_path not in sys.path:
+    sys.path.append(repo_path)
+
 import torch
+
 from ed_pl import TashkeelModel
 from tashkeel_tokenizer import TashkeelTokenizer
-from utils import remove_non_arabic
+
+#from utils import remove_non_arabic
 tokenizer = TashkeelTokenizer()
 # update this path , see the repo for model download link
-ckpt_path = '/l/users/hawau.toyin/catt/models/best_ed_mlm_ns_epoch_178.pt'
+ckpt_path = repo_path + '/models/best_ed_mlm_ns_epoch_178.pt'
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 max_seq_len = 1024
 model = TashkeelModel(tokenizer, max_seq_len=max_seq_len, n_layers=3, learnable_pos_emb=False)
@@ -25,15 +33,12 @@ model = TashkeelModel(tokenizer, max_seq_len=max_seq_len, n_layers=3, learnable_
 model.load_state_dict(torch.load(ckpt_path, map_location=device))
 model.eval().to(device)
 
-
-
-
 if __name__ == "__main__":
     
     """
     Usage:
     
-    python annotation_interface.py -m /path/to/manifest.csv \
+    python _code/annotation_interface.py -m /path/to/manifest.csv \
         -r /path/to/audio/files -o /path/to/save/output.csv 
         -s 0 #index to start from if you're resuming annotation
         -d arz_en
@@ -48,7 +53,7 @@ if __name__ == "__main__":
     parser.add_argument("-o","--out_file", type=str, help="Path to save the output", default="./diacritized.csv")
     parser.add_argument("-s","--start_index", type=int, help="Index to start from", default=0)
     parser.add_argument("-d","--dataset", type=str, help="Dataset to use", default="arz_en")
-    
+
     args = parser.parse_args()
     audio_root = args.audio_root
     manifest_file = args.manifest_file
@@ -89,22 +94,46 @@ if __name__ == "__main__":
     def diacritize(text):         
         text = model.do_tashkeel_batch([text], 1, False)[0]
         return text
-        
+
+    def diacritize_farasa(text):
+        url = 'https://farasa.qcri.org/webapi/seq2seq_diacritize/'
+        api_key = "ALhwOMJIvjPnrXYHPJ"
+        dialect = "mor"
+        payload = {'text': text, 'api_key': api_key, "dialect": dialect}
+        data = requests.post(url, data=payload)
+        if data.ok == True:
+            result = json.loads(data.text)
+            return result["text"]
+        else:
+            return "Error"
+
+    def process_diacritize(text, model):
+        if model == "Farasa(online)":
+            return diacritize_farasa(text)
+        if model == "CATT":
+            return diacritize(text)
+
     with gr.Blocks(theme=gr.themes.Glass()) as block:
         progress = gr.Textbox(value=f"{index}/{len(aud_text)}", label="Progress")
         sample = gr.Markdown(f"{aud_text[index][0]}")
         audio = gr.Audio(value=aud_text[index][0], type="filepath", label="Audio", autoplay=True)
         text = gr.Markdown(f"{aud_text[index][1]}")
+        selected= gr.Radio(["Farasa(online)", "CATT"], info="Select Model")
+
         dia_button = gr.Button("Auto Diacritize")
         gr.Markdown('<p style="color:red;">warning: auto diacritization model removes non-arabic characters.</p>')
         correct_text = gr.Textbox(value=f"{aud_text[index][1]}", interactive=True, label="Corrected Text")
         
         with gr.Row():
             save = gr.Button("Save Updated Text")
-        
-        dia_button.click(diacritize, inputs=[text], outputs=[correct_text])
-        save.click(save_new, [sample, correct_text]).\
-            then(next, outputs=[sample, audio, text, correct_text, progress])
+
+
+
+        dia_button.click(process_diacritize, inputs=[text,selected], outputs=[correct_text])
+        save.click(save_new, [audio, correct_text]). \
+                then(next, outputs=[sample, audio, text, correct_text])
+
+
     
     block.launch(share= True)
 
