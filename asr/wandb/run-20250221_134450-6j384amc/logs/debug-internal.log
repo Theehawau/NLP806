@@ -93,3 +93,66 @@ FileNotFoundError: [Errno 2] No such file or directory: 'conda'
 2025-02-21 13:45:40,947 INFO    Thread-12 :1126558 [dir_watcher.py:_on_file_modified():288] file/dir modified: /l/users/hawau.toyin/NLP806/asr/wandb/run-20250221_134450-6j384amc/files/output.log
 2025-02-21 13:45:42,572 DEBUG   HandlerThread:1126558 [handler.py:handle_request():158] handle_request: stop_status
 2025-02-21 13:45:42,573 DEBUG   SenderThread:1126558 [sender.py:send_request():418] send_request: stop_status
+2025-02-21 13:45:44,960 DEBUG   HandlerThread:1126558 [handler.py:handle_request():158] handle_request: status_report
+2025-02-21 13:45:44,984 INFO    Thread-12 :1126558 [dir_watcher.py:_on_file_modified():288] file/dir modified: /l/users/hawau.toyin/NLP806/asr/wandb/run-20250221_134450-6j384amc/files/output.log
+2025-02-21 13:45:46,995 INFO    Thread-12 :1126558 [dir_watcher.py:_on_file_modified():288] file/dir modified: /l/users/hawau.toyin/NLP806/asr/wandb/run-20250221_134450-6j384amc/files/output.log
+2025-02-21 13:45:48,914 DEBUG   HandlerThread:1126558 [handler.py:handle_request():158] handle_request: internal_messages
+2025-02-21 13:45:50,364 DEBUG   HandlerThread:1126558 [handler.py:handle_request():158] handle_request: status_report
+2025-02-21 13:45:51,014 INFO    Thread-12 :1126558 [dir_watcher.py:_on_file_modified():288] file/dir modified: /l/users/hawau.toyin/NLP806/asr/wandb/run-20250221_134450-6j384amc/files/output.log
+2025-02-21 13:45:51,614 DEBUG   SystemMonitor:1126558 [system_monitor.py:_start():172] Starting system metrics aggregation loop
+2025-02-21 13:45:51,618 DEBUG   SenderThread:1126558 [sender.py:send():391] send: stats
+2025-02-21 13:45:53,035 INFO    Thread-12 :1126558 [dir_watcher.py:_on_file_modified():288] file/dir modified: /l/users/hawau.toyin/NLP806/asr/wandb/run-20250221_134450-6j384amc/files/output.log
+2025-02-21 13:45:55,384 DEBUG   HandlerThread:1126558 [handler.py:handle_request():158] handle_request: status_report
+2025-02-21 13:45:57,056 INFO    Thread-12 :1126558 [dir_watcher.py:_on_file_modified():288] file/dir modified: /l/users/hawau.toyin/NLP806/asr/wandb/run-20250221_134450-6j384amc/files/output.log
+2025-02-21 13:45:59,535 DEBUG   HandlerThread:1126558 [handler.py:handle_request():158] handle_request: stop_status
+2025-02-21 13:45:59,535 DEBUG   HandlerThread:1126558 [handler.py:handle_request():158] handle_request: internal_messages
+2025-02-21 13:45:59,536 DEBUG   SenderThread:1126558 [sender.py:send_request():418] send_request: stop_status
+2025-02-21 13:46:01,074 INFO    Thread-12 :1126558 [dir_watcher.py:_on_file_modified():288] file/dir modified: /l/users/hawau.toyin/NLP806/asr/wandb/run-20250221_134450-6j384amc/files/output.log
+2025-02-21 13:46:01,189 DEBUG   HandlerThread:1126558 [handler.py:handle_request():158] handle_request: status_report
+2025-02-21 13:46:05,077 INFO    Thread-12 :1126558 [dir_watcher.py:_on_file_modified():288] file/dir modified: /l/users/hawau.toyin/NLP806/asr/wandb/run-20250221_134450-6j384amc/files/output.log
+2025-02-21 13:46:07,078 INFO    Thread-12 :1126558 [dir_watcher.py:_on_file_modified():288] file/dir modified: /l/users/hawau.toyin/NLP806/asr/wandb/run-20250221_134450-6j384amc/files/output.log
+2025-02-21 13:46:07,140 DEBUG   HandlerThread:1126558 [handler.py:handle_request():158] handle_request: status_report
+2025-02-21 13:46:11,130 INFO    Thread-12 :1126558 [dir_watcher.py:_on_file_modified():288] file/dir modified: /l/users/hawau.toyin/NLP806/asr/wandb/run-20250221_134450-6j384amc/files/output.log
+2025-02-21 13:46:12,042 DEBUG   HandlerThread:1126558 [handler.py:handle_request():158] handle_request: internal_messages
+2025-02-21 13:46:12,461 DEBUG   HandlerThread:1126558 [handler.py:handle_request():158] handle_request: status_report
+2025-02-21 13:46:13,133 INFO    Thread-12 :1126558 [dir_watcher.py:_on_file_modified():288] file/dir modified: /l/users/hawau.toyin/NLP806/asr/wandb/run-20250221_134450-6j384amc/files/output.log
+2025-02-21 13:46:14,957 DEBUG   HandlerThread:1126558 [handler.py:handle_request():158] handle_request: stop_status
+2025-02-21 13:46:14,958 DEBUG   SenderThread:1126558 [sender.py:send_request():418] send_request: stop_status
+2025-02-21 13:46:17,144 INFO    Thread-12 :1126558 [dir_watcher.py:_on_file_modified():288] file/dir modified: /l/users/hawau.toyin/NLP806/asr/wandb/run-20250221_134450-6j384amc/files/output.log
+2025-02-21 13:46:18,014 DEBUG   HandlerThread:1126558 [handler.py:handle_request():158] handle_request: status_report
+2025-02-21 13:46:18,494 DEBUG   HandlerThread:1126558 [handler.py:handle_request():158] handle_request: partial_history
+2025-02-21 13:46:18,496 DEBUG   SenderThread:1126558 [sender.py:send():391] send: metric
+2025-02-21 13:46:18,496 DEBUG   SenderThread:1126558 [sender.py:send():391] send: metric
+2025-02-21 13:46:18,497 DEBUG   SenderThread:1126558 [sender.py:send():391] send: metric
+2025-02-21 13:46:18,497 DEBUG   SenderThread:1126558 [sender.py:send():391] send: metric
+2025-02-21 13:46:18,497 DEBUG   SenderThread:1126558 [sender.py:send():391] send: history
+2025-02-21 13:46:18,497 DEBUG   SenderThread:1126558 [sender.py:send_request():418] send_request: summary_record
+2025-02-21 13:46:18,501 INFO    SenderThread:1126558 [sender.py:_save_file():1466] saving file wandb-summary.json with policy end
+2025-02-21 13:46:19,195 INFO    Thread-12 :1126558 [dir_watcher.py:_on_file_modified():288] file/dir modified: /l/users/hawau.toyin/NLP806/asr/wandb/run-20250221_134450-6j384amc/files/output.log
+2025-02-21 13:46:19,195 INFO    Thread-12 :1126558 [dir_watcher.py:_on_file_created():271] file/dir created: /l/users/hawau.toyin/NLP806/asr/wandb/run-20250221_134450-6j384amc/files/wandb-summary.json
+2025-02-21 13:46:21,254 INFO    Thread-12 :1126558 [dir_watcher.py:_on_file_modified():288] file/dir modified: /l/users/hawau.toyin/NLP806/asr/wandb/run-20250221_134450-6j384amc/files/output.log
+2025-02-21 13:46:21,674 DEBUG   SenderThread:1126558 [sender.py:send():391] send: stats
+2025-02-21 13:46:23,285 INFO    Thread-12 :1126558 [dir_watcher.py:_on_file_modified():288] file/dir modified: /l/users/hawau.toyin/NLP806/asr/wandb/run-20250221_134450-6j384amc/files/output.log
+2025-02-21 13:46:23,684 DEBUG   HandlerThread:1126558 [handler.py:handle_request():158] handle_request: status_report
+2025-02-21 13:46:24,267 DEBUG   HandlerThread:1126558 [handler.py:handle_request():158] handle_request: internal_messages
+2025-02-21 13:46:27,295 INFO    Thread-12 :1126558 [dir_watcher.py:_on_file_modified():288] file/dir modified: /l/users/hawau.toyin/NLP806/asr/wandb/run-20250221_134450-6j384amc/files/output.log
+2025-02-21 13:46:28,839 DEBUG   HandlerThread:1126558 [handler.py:handle_request():158] handle_request: status_report
+2025-02-21 13:46:29,297 INFO    Thread-12 :1126558 [dir_watcher.py:_on_file_modified():288] file/dir modified: /l/users/hawau.toyin/NLP806/asr/wandb/run-20250221_134450-6j384amc/files/output.log
+2025-02-21 13:46:29,298 INFO    Thread-12 :1126558 [dir_watcher.py:_on_file_modified():288] file/dir modified: /l/users/hawau.toyin/NLP806/asr/wandb/run-20250221_134450-6j384amc/files/config.yaml
+2025-02-21 13:46:30,584 DEBUG   HandlerThread:1126558 [handler.py:handle_request():158] handle_request: stop_status
+2025-02-21 13:46:30,584 DEBUG   SenderThread:1126558 [sender.py:send_request():418] send_request: stop_status
+2025-02-21 13:46:33,316 INFO    Thread-12 :1126558 [dir_watcher.py:_on_file_modified():288] file/dir modified: /l/users/hawau.toyin/NLP806/asr/wandb/run-20250221_134450-6j384amc/files/output.log
+2025-02-21 13:46:34,286 DEBUG   HandlerThread:1126558 [handler.py:handle_request():158] handle_request: status_report
+2025-02-21 13:46:35,107 DEBUG   HandlerThread:1126558 [handler.py:handle_request():158] handle_request: internal_messages
+2025-02-21 13:46:37,336 INFO    Thread-12 :1126558 [dir_watcher.py:_on_file_modified():288] file/dir modified: /l/users/hawau.toyin/NLP806/asr/wandb/run-20250221_134450-6j384amc/files/output.log
+2025-02-21 13:46:39,744 DEBUG   HandlerThread:1126558 [handler.py:handle_request():158] handle_request: status_report
+2025-02-21 13:46:41,354 INFO    Thread-12 :1126558 [dir_watcher.py:_on_file_modified():288] file/dir modified: /l/users/hawau.toyin/NLP806/asr/wandb/run-20250221_134450-6j384amc/files/output.log
+2025-02-21 13:46:43,377 INFO    Thread-12 :1126558 [dir_watcher.py:_on_file_modified():288] file/dir modified: /l/users/hawau.toyin/NLP806/asr/wandb/run-20250221_134450-6j384amc/files/output.log
+2025-02-21 13:46:44,763 DEBUG   HandlerThread:1126558 [handler.py:handle_request():158] handle_request: status_report
+2025-02-21 13:46:45,107 DEBUG   HandlerThread:1126558 [handler.py:handle_request():158] handle_request: internal_messages
+2025-02-21 13:46:47,410 INFO    Thread-12 :1126558 [dir_watcher.py:_on_file_modified():288] file/dir modified: /l/users/hawau.toyin/NLP806/asr/wandb/run-20250221_134450-6j384amc/files/output.log
+2025-02-21 13:46:47,890 DEBUG   HandlerThread:1126558 [handler.py:handle_request():158] handle_request: stop_status
+2025-02-21 13:46:47,890 DEBUG   SenderThread:1126558 [sender.py:send_request():418] send_request: stop_status
+2025-02-21 13:46:49,424 INFO    Thread-12 :1126558 [dir_watcher.py:_on_file_modified():288] file/dir modified: /l/users/hawau.toyin/NLP806/asr/wandb/run-20250221_134450-6j384amc/files/output.log
+2025-02-21 13:46:50,421 DEBUG   HandlerThread:1126558 [handler.py:handle_request():158] handle_request: status_report
+2025-02-21 13:46:51,631 DEBUG   SenderThread:1126558 [sender.py:send():391] send: stats
