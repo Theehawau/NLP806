@@ -11,25 +11,23 @@ from functools import partial
 from dataclasses import dataclass
 from datasets import load_dataset
 from typing import Any, Dict, List, Union
-from transformers import Seq2SeqTrainer, WhisperProcessor, WhisperForConditionalGeneration, Seq2SeqTrainingArguments
+from torch.nn.utils.rnn import pad_sequence
+from transformers import Seq2SeqTrainer, SpeechT5Processor, SpeechT5Tokenizer, Seq2SeqTrainingArguments
 
 
 dataset = "clartts"
-save_dir = "./models/whisper-tiny-clartts"
+save_dir = "./models/artst-v3-clartts"
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using device: {device} ")
 
 
-model_id = "openai/whisper-tiny"
-
-processor = WhisperProcessor.from_pretrained(
-    model_id, language="arabic", task="transcribe"
-)
+model_id = "mbzuai/artst_asr_v3"
+tokenizer = SpeechT5Tokenizer.from_pretrained(model_id)
+processor = SpeechT5Processor.from_pretrained(model_id)
 
 # Load dataset
 df = load_dataset("MBZUAI/ClArTTS")
-
 
 def prepare_dataset(example):
     # # resample audio with librosa
@@ -49,31 +47,17 @@ def prepare_dataset(example):
     example = processor(
         audio=audio,
         sampling_rate=16000,
-        text=text,
+        text_target=text,
     )
-
-    #  compute input length of audio sample in seconds
+    # # compute input length of audio sample in seconds
     example["input_length"] = len(audio) / 16000
 
     return example
 
-
 print("Data Preparation...")
 df = df.map(prepare_dataset, remove_columns=df.column_names['train'], num_proc=4)
 
-max_input_length = 30.0
 
-
-# Data Filtering
-def is_audio_in_length_range(length):
-    return length < max_input_length
-
-
-print("Filtering Data...")
-df["train"] = df["train"].filter(
-    is_audio_in_length_range,
-    input_columns=["input_length"],
-)
 
 
 @dataclass
@@ -81,29 +65,23 @@ class DataCollatorSpeechSeq2SeqWithPadding:
     processor: Any
 
     def __call__(
-        self, features: List[Dict[str, Union[List[int], torch.Tensor]]]
+        self, features: List[Dict[str, Union[List[int], torch.Tensor]]], padding=True
     ) -> Dict[str, torch.Tensor]:
+        batch = {}
         # split inputs and labels since they have to be of different lengths and need different padding methods
-        # first treat the audio inputs by simply returning torch tensors
-        input_features = [
-            {"input_features": feature["input_features"][0]} for feature in features
-        ]
-        batch = self.processor.feature_extractor.pad(input_features, return_tensors="pt")
+        labels_batch = processor.tokenizer.pad({'input_ids':[ sample['labels'] for sample in features]}, return_tensors="pt")
+        
+        batch['input_values'] = pad_sequence([torch.tensor(sample['input_values'][0]) for sample in features], batch_first=True)
+        batch['attention_mask'] = pad_sequence([torch.tensor(sample['attention_mask'][0]) for sample in features], batch_first=True)
 
-        # get the tokenized label sequences
-        label_features = [{"input_ids": feature["labels"]} for feature in features]
-        # pad the labels to max length
-        labels_batch = self.processor.tokenizer.pad(label_features, return_tensors="pt")
+        labels = [{"labels": feature["labels"]} for feature in features]
+
 
         # replace padding with -100 to ignore loss correctly
         labels = labels_batch["input_ids"].masked_fill(
             labels_batch.attention_mask.ne(1), -100
         )
 
-        # if bos token is appended in previous tokenization step,
-        # cut bos token here as it's append later anyways
-        if (labels[:, 0] == self.processor.tokenizer.bos_token_id).all().cpu().item():
-            labels = labels[:, 1:]
 
         batch["labels"] = labels
         return batch
@@ -111,8 +89,10 @@ class DataCollatorSpeechSeq2SeqWithPadding:
     
 data_collator = DataCollatorSpeechSeq2SeqWithPadding(processor=processor)
 
+
 wer = evaluate.load("wer")
 cer = evaluate.load("cer")
+
 
 
 def compute_metrics(pred):
@@ -126,33 +106,27 @@ def compute_metrics(pred):
     pred_str = processor.batch_decode(pred_ids, skip_special_tokens=True)
     label_str = processor.batch_decode(label_ids, skip_special_tokens=True)
 
-    # compute  wer
-    wer_ = 100 * wer.compute(predictions=pred_str, references=label_str)
-    cer_ = 100 * cer.compute(predictions=pred_str, references=label_str)
+    # compute metrics
+    _wer = 100 * wer.compute(predictions=pred_str, references=label_str)
+    _cer = 100 * cer.compute(predictions=pred_str, references=label_str)
 
-    return {"wer": wer_, "cer": cer_}
-
-print("Model Initialization...")
-# Load pre-trained model and move to device
-model = WhisperForConditionalGeneration.from_pretrained(model_id).to(device)
+    return {"wer": _wer, "cer": _cer}
 
 
-# disable cache during training since it's incompatible with gradient checkpointing
-model.config.use_cache = False
+from transformers import SpeechT5ForSpeechToText
 
-# set language and task for generation and re-enable cache
-model.generate = partial(
-    model.generate, language="arabic", task="transcribe", use_cache=True
-)
+model = SpeechT5ForSpeechToText.from_pretrained(model_id)
+model.to(device)
 
+from transformers import Seq2SeqTrainingArguments
 
 training_args = Seq2SeqTrainingArguments(
     output_dir=save_dir,  # name on the HF Hub
-    per_device_train_batch_size=16,
     auto_find_batch_size=True,
+    per_device_train_batch_size=16,
     gradient_accumulation_steps=1,  # increase by 2x for every 2x decrease in batch size
-    learning_rate=1e-5,
-    lr_scheduler_type="constant_with_warmup",
+    learning_rate=6e-5,
+    lr_scheduler_type="inverse_sqrt",
     warmup_steps=50,
     max_steps=1000,  # increase to 4000 if you have your own GPU or a Colab paid plan
     gradient_checkpointing=True,
@@ -187,10 +161,11 @@ trainer = Seq2SeqTrainer(
 print("Training...")
 trainer.train(resume_from_checkpoint=True)
 
+
 try:
     trainer.save_model(f"{save_dir}/best/")
 except:
-    print("Model not saved")
+    print("Best checkpoint not saved")
     
 print("Running Evaluation...")
 evaluation = trainer.evaluate(df['test'])
@@ -202,6 +177,7 @@ prediction = trainer.predict(df['test'])
 out_file = open(f"{save_dir}/predictions.csv", "w")
 
 print("predictions\treferences", file=out_file)
+
 preds = processor.batch_decode(prediction[0], skip_special_tokens=True)
 refs = processor.batch_decode(prediction[1], skip_special_tokens=True)
 
@@ -209,3 +185,4 @@ for i, item in enumerate(preds):
     print(f"{preds[i]}\t{refs[i]}", file=out_file)
 
 out_file.close()
+
