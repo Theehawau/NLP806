@@ -15,13 +15,13 @@ from transformers import Seq2SeqTrainer, WhisperProcessor, WhisperForConditional
 
 
 dataset = "clartts"
-save_dir = "./models/whisper-tiny-clartts"
+save_dir = "./models/whisper-large-clartts"
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using device: {device} ")
 
 
-model_id = "openai/whisper-tiny"
+model_id = "openai/whisper-large-v3"
 
 processor = WhisperProcessor.from_pretrained(
     model_id, language="arabic", task="transcribe"
@@ -185,7 +185,7 @@ trainer = Seq2SeqTrainer(
     tokenizer=processor,
 )
 print("Training...")
-trainer.train(resume_from_checkpoint=True)
+trainer.train()
 
 try:
     trainer.save_model(f"{save_dir}/best/")
