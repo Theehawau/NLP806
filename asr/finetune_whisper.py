@@ -1,5 +1,6 @@
 import torch
 import librosa
+import argparse
 import evaluate
 import numpy as np
 
@@ -14,21 +15,34 @@ from typing import Any, Dict, List, Union
 from transformers import Seq2SeqTrainer, WhisperProcessor, WhisperForConditionalGeneration, Seq2SeqTrainingArguments
 
 
-dataset = "clartts"
-save_dir = "./models/whisper-large-clartts"
+parser = argparse.ArgumentParser()
+parser.add_argument("-d","--dataset", type=str, default="clartts,mdpc")
+parser.add_argument("--data_path", type=str, default="/l/speech_lab/data_806")
+parser.add_argument("--save_dir", type=str, default="./models/whisper-large-clartts-mdpc")
+parser.add_argument("--model_id", type=str, default="openai/whisper-large-v3")
+args = parser.parse_args()
+
+dataset = args.dataset
+save_dir = args.save_dir
+model_id = args.model_id
+data_path = args.data_path
+
+dataset = "clartts,mdpc"
+save_dir = "./models/whisper-large-clartts-mdpc"
+model_id = "openai/whisper-large-v3"
+
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using device: {device} ")
 
 
-model_id = "openai/whisper-large-v3"
 
 processor = WhisperProcessor.from_pretrained(
     model_id, language="arabic", task="transcribe"
 )
 
 # Load dataset
-df = load_dataset("MBZUAI/ClArTTS")
+df = load_dataset(data_path)
 
 
 def prepare_dataset(example):
@@ -154,7 +168,7 @@ training_args = Seq2SeqTrainingArguments(
     learning_rate=1e-5,
     lr_scheduler_type="constant_with_warmup",
     warmup_steps=50,
-    max_steps=1000,  # increase to 4000 if you have your own GPU or a Colab paid plan
+    max_steps=4000,  # increase to 4000 if you have your own GPU or a Colab paid plan
     gradient_checkpointing=True,
     fp16=True,
     fp16_full_eval=False,

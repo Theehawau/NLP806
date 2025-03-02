@@ -1,5 +1,6 @@
 import torch
 import librosa
+import argparse
 import evaluate
 import numpy as np
 
@@ -15,19 +16,32 @@ from torch.nn.utils.rnn import pad_sequence
 from transformers import Seq2SeqTrainer, SpeechT5Processor, SpeechT5Tokenizer, Seq2SeqTrainingArguments
 
 
-dataset = "clartts"
-save_dir = "./models/artst-v3-clartts"
+parser = argparse.ArgumentParser()
+parser.add_argument("-d","--dataset", type=str, default="clartts,mdpc")
+parser.add_argument("--data_path", type=str, default="/l/speech_lab/data_806")
+parser.add_argument("--save_dir", type=str, default="./models/artst-v3-qasr-clartts-mdpc")
+parser.add_argument("--model_id", type=str, default="mbzuai/artst_asr_v3_qasr")
+args = parser.parse_args()
+
+dataset = args.dataset
+save_dir = args.save_dir
+model_id = args.model_id
+data_path = args.data_path
+
+# dataset = "clartts,mdpc"
+# save_dir = "./models/artst-v3-qasr-clartts-mdpc"
+# model_id = "mbzuai/artst_asr_v3_qasr"
+
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using device: {device} ")
 
 
-model_id = "mbzuai/artst_asr_v3"
 tokenizer = SpeechT5Tokenizer.from_pretrained(model_id)
 processor = SpeechT5Processor.from_pretrained(model_id)
 
 # Load dataset
-df = load_dataset("MBZUAI/ClArTTS")
+df = load_dataset(data_path)
 
 def prepare_dataset(example):
     # # resample audio with librosa
@@ -159,8 +173,7 @@ trainer = Seq2SeqTrainer(
     tokenizer=processor,
 )
 print("Training...")
-trainer.train(resume_from_checkpoint=True)
-
+trainer.train()
 
 try:
     trainer.save_model(f"{save_dir}/best/")
