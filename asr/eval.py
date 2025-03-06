@@ -17,7 +17,7 @@ device = "cuda"
 torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
 
 datasets_to_evaluate = {
-    "clartts": "MBZUAI/ClArTTS",
+    "clartts": "/l/speech_lab/data_806/CLARTTS",
     "asc": "herwoww/asc",
     "mdpc": "herwoww/mdpc",
 }
@@ -90,10 +90,10 @@ if __name__ == "__main__":
                 raise ValueError(f"Dataset {dataset} not found in the list of datasets to evaluate")
             print("Loading dataset...")
             df = load_dataset(datasets_to_evaluate[dataset], split="test")
-            if dataset == "clartts":
-                df = df.map(lambda x: predict(x, use_hf=False))
-            else:
-                df = df.map(lambda x: predict(x, use_hf=True))
+            # if dataset == "clartts":
+            #     df = df.map(lambda x: predict(x, use_hf=False))
+            # else:
+            df = df.map(lambda x: predict(x, use_hf=True))
             r = df['processed_text']
             p = df['pred']
 

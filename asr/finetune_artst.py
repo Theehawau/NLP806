@@ -136,13 +136,13 @@ from transformers import Seq2SeqTrainingArguments
 
 training_args = Seq2SeqTrainingArguments(
     output_dir=save_dir,  # name on the HF Hub
-    auto_find_batch_size=True,
+    # auto_find_batch_size=True,
     per_device_train_batch_size=16,
     gradient_accumulation_steps=1,  # increase by 2x for every 2x decrease in batch size
     learning_rate=6e-5,
     lr_scheduler_type="inverse_sqrt",
     warmup_steps=50,
-    max_steps=1000,  # increase to 4000 if you have your own GPU or a Colab paid plan
+    max_steps=4000,  # increase to 4000 if you have your own GPU or a Colab paid plan
     gradient_checkpointing=True,
     fp16=True,
     fp16_full_eval=False,
@@ -151,7 +151,7 @@ training_args = Seq2SeqTrainingArguments(
     predict_with_generate=True,
     generation_max_length=250,
     save_steps=500,
-    eval_steps=50,
+    eval_steps=250,
     logging_steps=25,
     load_best_model_at_end=True,
     metric_for_best_model="cer",
@@ -173,7 +173,7 @@ trainer = Seq2SeqTrainer(
     tokenizer=processor,
 )
 print("Training...")
-trainer.train()
+trainer.train(resume_from_checkpoint=True)
 
 try:
     trainer.save_model(f"{save_dir}/best/")

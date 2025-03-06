@@ -18,8 +18,8 @@ from transformers import Seq2SeqTrainer, WhisperProcessor, WhisperForConditional
 parser = argparse.ArgumentParser()
 parser.add_argument("-d","--dataset", type=str, default="clartts,mdpc")
 parser.add_argument("--data_path", type=str, default="/l/speech_lab/data_806")
-parser.add_argument("--save_dir", type=str, default="./models/whisper-large-clartts-mdpc")
-parser.add_argument("--model_id", type=str, default="openai/whisper-large-v3")
+parser.add_argument("--save_dir", type=str, default="./models/whisper-tiny-clartts-mdpc")
+parser.add_argument("--model_id", type=str, default="openai/whisper-tiny")
 args = parser.parse_args()
 
 dataset = args.dataset
@@ -27,9 +27,9 @@ save_dir = args.save_dir
 model_id = args.model_id
 data_path = args.data_path
 
-dataset = "clartts,mdpc"
-save_dir = "./models/whisper-large-clartts-mdpc"
-model_id = "openai/whisper-large-v3"
+# dataset = "clartts,mdpc"
+# save_dir = "./models/whisper-large-clartts-mdpc"
+# model_id = "openai/whisper-large-v3"
 
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -177,7 +177,7 @@ training_args = Seq2SeqTrainingArguments(
     predict_with_generate=True,
     generation_max_length=250,
     save_steps=500,
-    eval_steps=50,
+    eval_steps=250,
     logging_steps=25,
     load_best_model_at_end=True,
     metric_for_best_model="cer",
