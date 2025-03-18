@@ -4,3 +4,4 @@
 */wandb/*
 asr/wandb/
 lm_fusion_model/data/
+*/_models/
