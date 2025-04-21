@@ -18,8 +18,12 @@ from transformers import SpeechT5Processor, SpeechT5ForTextToSpeech, SpeechT5For
 
 warnings.filterwarnings("ignore")
 
-dataset = "ClArTTS+TunSwitch+ArVoice"
-PATH=f'_models/speecht5+lstm_model_lr_0.001_best_{dataset}.pth'
+dataset = "ClArTTS+TunSwitch"
+# PATH=f'_models/speecht5+lstm_model_lr_0.001_best_{dataset}.pth'
+PATH=f'_models/textonly_speecht5+lstm_model_lr_0.001_best_{dataset}.pth'
+
+
+# dataset="ClArTTS"
 # PATH=f'_models/speecht5+lstm_model_lr_0.001_best.pth'
 
 cer = evaluate.load("cer")
@@ -152,12 +156,37 @@ def collate_fn(batch):
 
     return text_batch,speech_batch, text_attention_mask_batch, speech_attention_mask_batch, label_batch
 
+# class DiacriticPredictor(nn.Module):
+#     def __init__(self, text_model_name='/l/users/hawau.toyin/convert_to_hf/v3_tts_wd', speech_model_name="MBZUAI/artst_asr_v3_qasr", hidden_size=256, num_classes=10):
+#         super(DiacriticPredictor, self).__init__()
+#         self.text_enc = SpeechT5ForTextToSpeech.from_pretrained(text_model_name).get_encoder()
+#         self.speech_enc = SpeechT5ForSpeechToText.from_pretrained(speech_model_name).get_encoder()
+#         self.speech_text_cross_attn = nn.MultiheadAttention(embed_dim = self.text_enc.config.hidden_size, num_heads=8, batch_first=True)
+#         self.lstm = nn.LSTM(input_size=self.text_enc.config.hidden_size, hidden_size=hidden_size, num_layers=2, batch_first=True, bidirectional=True)
+#         self.fc = nn.Linear(hidden_size * 2, num_classes)  # Multiply by 2 for bidirectional
+#         self.dropout = nn.Dropout(0.3)
+
+#     def forward(self, input_ids, input_values, text_attention_mask, speech_attention_mask):
+#         with torch.no_grad():  # Freeze BERT during training
+#             if input_ids is not None:
+#                 text_emb = self.text_enc(input_ids, attention_mask=text_attention_mask).last_hidden_state
+#             speech_emb = self.speech_enc(input_values, attention_mask=speech_attention_mask).last_hidden_state
+        
+#         if input_ids is not None and text_emb is not None:
+#             speech_text_emb, _ = self.speech_text_cross_attn(text_emb, speech_emb, speech_emb)
+        
+
+#         lstm_output, _ = self.lstm(speech_text_emb)  # Shape: (batch_size, seq_len, hidden_size * 2)
+
+#         lstm_output = self.dropout(lstm_output)
+        
+#         logits = self.fc(lstm_output)  # Shape: (batch_size, seq_len, num_classes)
+#         return logits
+
 class DiacriticPredictor(nn.Module):
     def __init__(self, text_model_name='/l/users/hawau.toyin/convert_to_hf/v3_tts_wd', speech_model_name="MBZUAI/artst_asr_v3_qasr", hidden_size=256, num_classes=10):
         super(DiacriticPredictor, self).__init__()
         self.text_enc = SpeechT5ForTextToSpeech.from_pretrained(text_model_name).get_encoder()
-        self.speech_enc = SpeechT5ForSpeechToText.from_pretrained(speech_model_name).get_encoder()
-        self.speech_text_cross_attn = nn.MultiheadAttention(embed_dim = self.text_enc.config.hidden_size, num_heads=8, batch_first=True)
         self.lstm = nn.LSTM(input_size=self.text_enc.config.hidden_size, hidden_size=hidden_size, num_layers=2, batch_first=True, bidirectional=True)
         self.fc = nn.Linear(hidden_size * 2, num_classes)  # Multiply by 2 for bidirectional
         self.dropout = nn.Dropout(0.3)
@@ -166,12 +195,9 @@ class DiacriticPredictor(nn.Module):
         with torch.no_grad():  # Freeze BERT during training
             if input_ids is not None:
                 text_emb = self.text_enc(input_ids, attention_mask=text_attention_mask).last_hidden_state
-            speech_emb = self.speech_enc(input_values, attention_mask=speech_attention_mask).last_hidden_state
-        
-        if input_ids is not None and text_emb is not None:
-            speech_text_emb, _ = self.speech_text_cross_attn(text_emb, speech_emb, speech_emb)
-        
-        lstm_output, _ = self.lstm(speech_text_emb)  # Shape: (batch_size, seq_len, hidden_size * 2)
+
+        lstm_output, _ = self.lstm(text_emb)  # Shape: (batch_size, seq_len, hidden_size * 2)
+
         lstm_output = self.dropout(lstm_output)
         
         logits = self.fc(lstm_output)  # Shape: (batch_size, seq_len, num_classes)
@@ -297,7 +323,7 @@ elif dataset == "ClArTTS+TunSwitch+ArVoice":
 train_ds = train_ds.filter(filter_unequal_length)
 
 
-# test_ds = test_ds.map(preprocess_function, batched=False)
+test_ds = test_ds.map(preprocess_function, batched=False)
 # test_ds = test_ds.filter(filter_unequal_length)
 
 print("Train dataset size:", len(train_ds))
@@ -324,6 +350,56 @@ print("Testing model...")
 model.load_state_dict(torch.load(PATH, weights_only=True))
 # test_loader = DataLoader(test_ds, batch_size=32, shuffle=False, collate_fn=collate_fn)
 
+print("ASC:")
+test_df = pd.read_csv("/l/users/hawau.toyin/NLP806/decoder_model/arzen_test.csv", sep="\t", skiprows=1, names=['wav','gt','drop','transcription'])
+test_df['wav'] = test_df['wav'].apply(lambda x: f"/l/speech_lab/CodeSwitchedDataset[code_switched_dataset]/ArzEn_SpeechCorpus_1.0/recordings_segmented/{x}")
+test_ds = Dataset.from_pandas(test_df)
+test_ds = test_ds.map(preprocess_function, batched=False)
+test_ds = test_ds.filter(filter_unequal_length)
+sentences, predicted_sentences, text_diacritics, predictced_diacritics = [], [], [], []
+for example in tqdm(test_ds):
+    text = example['transcription']
+    if 'audio' in example.keys():
+        audio = example['audio']['array']
+    else: 
+        audio, sr = sf.read(example['wav'])
+        if sr != 16000:
+            audio = librosa.resample(audio, orig_sr=sr, target_sr=16000)
+            sr=16000
+    sentence, predicted_sentence, text_diacritic, predictced_diacritic = predict_diacritics(model, text, audio, device='cuda')
+    sentences.append(sentence)
+    predicted_sentences.append(predicted_sentence)
+    text_diacritics.append("".join(text_diacritic))
+    predictced_diacritics.append("".join(predictced_diacritic))
+df = pd.DataFrame({'reference': sentences, 'predicted': predicted_sentences})
+df.to_csv(f"_outputs_textOnly/t5_model_{dataset}_ASC", sep="\t", index=False)
+
+
+print("ArZen:")
+test_df = pd.read_csv("/l/users/hawau.toyin/NLP806/decoder_model/arzen_test.csv", sep="\t", skiprows=1, names=['wav','gt','drop','transcription'])
+test_df['wav'] = test_df['wav'].apply(lambda x: f"/l/speech_lab/CodeSwitchedDataset[code_switched_dataset]/ArzEn_SpeechCorpus_1.0/recordings_segmented/{x}")
+test_ds = Dataset.from_pandas(test_df)
+test_ds = test_ds.map(preprocess_function, batched=False)
+test_ds = test_ds.filter(filter_unequal_length)
+sentences, predicted_sentences, text_diacritics, predictced_diacritics = [], [], [], []
+for example in tqdm(test_ds):
+    text = example['transcription']
+    if 'audio' in example.keys():
+        audio = example['audio']['array']
+    else: 
+        audio, sr = sf.read(example['wav'])
+        if sr != 16000:
+            audio = librosa.resample(audio, orig_sr=sr, target_sr=16000)
+            sr=16000
+    sentence, predicted_sentence, text_diacritic, predictced_diacritic = predict_diacritics(model, text, audio, device='cuda')
+    sentences.append(sentence)
+    predicted_sentences.append(predicted_sentence)
+    text_diacritics.append("".join(text_diacritic))
+    predictced_diacritics.append("".join(predictced_diacritic))
+df = pd.DataFrame({'reference': sentences, 'predicted': predicted_sentences})
+df.to_csv(f"_outputs_textOnly/t5_model_{dataset}_ArzEn", sep="\t", index=False)
+
+
 
 print("TunSwitch:")
 test_df = pd.read_csv("/l/users/hawau.toyin/NLP806/TunSwitch/test_cs_manual.csv", sep="\t", skiprows=1, names=['wav','drop','transcription'])
@@ -347,7 +423,7 @@ for example in tqdm(test_ds):
     text_diacritics.append("".join(text_diacritic))
     predictced_diacritics.append("".join(predictced_diacritic))
 df = pd.DataFrame({'reference': sentences, 'predicted': predicted_sentences})
-df.to_csv(f"_outputs/t5_model_{dataset}_TunSwitch", sep="\t", index=False)
+df.to_csv(f"_outputs_textOnly/t5_model_{dataset}_TunSwitch", sep="\t", index=False)
 
 print(f"DER: {100 * cer.compute(references=text_diacritics, predictions=predictced_diacritics)}")
 text_diacritics_wo_no_diacritic = [text_diacritic.replace("-", " ").replace("_", " ") for text_diacritic in text_diacritics]
@@ -373,7 +449,7 @@ for example in tqdm(test_ds):
     predictced_diacritics.append("".join(predictced_diacritic))
 
 df = pd.DataFrame({'reference': sentences, 'predicted': predicted_sentences})
-df.to_csv(f"_outputs/t5_model_{dataset}_CLARTTS", sep="\t", index=False)
+df.to_csv(f"_outputs_textOnly/t5_model_{dataset}_CLARTTS", sep="\t", index=False)
 print(f"DER: {100 * cer.compute(references=text_diacritics, predictions=predictced_diacritics)}")
 text_diacritics_wo_no_diacritic = [text_diacritic.replace("-", " ").replace("_", " ") for text_diacritic in text_diacritics]
 predictced_diacritics_wo_no_diacritic = [predictced_diacritic.replace("-", " ").replace("_", " ") for predictced_diacritic in predictced_diacritics]
@@ -396,7 +472,7 @@ for example in tqdm(test_ds):
     predictced_diacritics.append("".join(predictced_diacritic))
 
 df = pd.DataFrame({'reference': sentences, 'predicted': predicted_sentences})
-df.to_csv(f"_outputs/t5_model_{dataset}_ArVoice", sep="\t", index=False)
+df.to_csv(f"_outputs_textOnly/t5_model_{dataset}_ArVoice", sep="\t", index=False)
 
 print(f"DER: {100 * cer.compute(references=text_diacritics, predictions=predictced_diacritics)}")
 text_diacritics_wo_no_diacritic = [text_diacritic.replace("-", " ").replace("_", " ") for text_diacritic in text_diacritics]
@@ -418,7 +494,7 @@ for example in tqdm(test_ds):
     predictced_diacritics.append("".join(predictced_diacritic))
 
 df = pd.DataFrame({'reference': sentences, 'predicted': predicted_sentences})
-df.to_csv(f"_outputs/t5_model_{dataset}_MDPC", sep="\t", index=False)
+df.to_csv(f"_outputs_textOnly/t5_model_{dataset}_MDPC", sep="\t", index=False)
 
 print(f"DER: {100 * cer.compute(references=text_diacritics, predictions=predictced_diacritics)}")
 text_diacritics_wo_no_diacritic = [text_diacritic.replace("-", " ").replace("_", " ") for text_diacritic in text_diacritics]
